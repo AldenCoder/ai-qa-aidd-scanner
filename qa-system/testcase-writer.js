@@ -4,6 +4,7 @@ const { prepareTarget, walk, safeRead, rel, discoverApi, detectStack } = require
 
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT_FILE = path.join(ROOT, 'testcase', 'generated', 'latest_writer_output.json');
+const CSV_OUTPUT_FILE = path.join(ROOT, 'testcase', 'generated', 'latest_writer_output.csv');
 const DOC_EXT = /\.(md|markdown|txt|rst|adoc|json|ya?ml)$/i;
 const UI_EXT = /\.(html|jsx|tsx|vue|svelte|js|ts)$/i;
 
@@ -14,6 +15,11 @@ function ensureDir(dir) {
 function writeJson(filePath, value) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, JSON.stringify(value, null, 2), 'utf8');
+}
+
+function writeText(filePath, value) {
+  ensureDir(path.dirname(filePath));
+  fs.writeFileSync(filePath, value, 'utf8');
 }
 
 function asciiFold(value) {
@@ -533,6 +539,7 @@ async function generateTestcases(options = {}) {
   };
 
   writeJson(OUTPUT_FILE, output);
+  writeText(CSV_OUTPUT_FILE, toCsv(output));
   return output;
 }
 
@@ -568,5 +575,6 @@ function toCsv(pack) {
 module.exports = {
   generateTestcases,
   toCsv,
-  OUTPUT_FILE
+  OUTPUT_FILE,
+  CSV_OUTPUT_FILE
 };

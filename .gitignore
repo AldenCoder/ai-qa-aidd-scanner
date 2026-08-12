@@ -7,3 +7,4 @@ tmp/
 evals/results/run-*/
 !evals/results/latest_summary.json
 testcase/generated/latest_writer_output.json
+testcase/generated/latest_writer_output.csv

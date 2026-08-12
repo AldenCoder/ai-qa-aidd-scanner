@@ -58,6 +58,7 @@ npm run app
 Main outputs:
 
 - `testcase/generated/latest_writer_output.json`
+- `testcase/generated/latest_writer_output.csv`
 - `testcase/generated/testcases.json`
 - `testcase/approved/approved_testcases.json`
 - `evals/results/latest_summary.json`
