@@ -1,8 +1,8 @@
 {
-  "name": "ai-qa-aidd-scanner",
+  "name": "ai-qa-testcase-writer",
   "version": "0.1.0",
   "private": true,
-  "description": "QA checklist scanner and generated-test demo for API, UI, security, and test-readiness review.",
+  "description": "AI QA test case writer for generating tester-ready cases from docs, code, or public GitHub repos.",
   "engines": {
     "node": ">=20"
   },

@@ -1,11 +1,27 @@
-# AI QA Checklist Scanner
+# AI QA Test Case Writer
 
-Small QA scanner/demo for checking a codebase or public GitHub repo against API, UI, security, and test-readiness checklists. It also includes a generated-test pipeline sample:
+Small system for generating tester-ready test cases from project documents, source code, or a public GitHub repository.
+
+Main flow:
 
 ```text
-knowledge -> rule matrix -> testcases -> validation -> QA review -> approved tests
--> Playwright automation -> execution -> evidence
+docs/code/GitHub -> requirement/API/UI discovery -> test case draft
+-> tester review status -> JSON/CSV export -> optional automation sample
 ```
+
+The primary output is a test case table with:
+
+- priority
+- test type
+- preconditions
+- test data
+- execution steps
+- expected result
+- source traceability
+- review status
+- automation hint
+
+API/UI/security are coverage groups inside the generated test cases. They are not the main product screen.
 
 ## Run
 
@@ -16,18 +32,20 @@ npm start
 
 Open:
 
-- Dashboard: `http://127.0.0.1:3200`
-- Demo app: `http://127.0.0.1:3200/demo`
+- Test Case Writer: `http://127.0.0.1:3200`
+- Sample app: `http://127.0.0.1:3200/demo`
+- Latest JSON export: `http://127.0.0.1:3200/api/testcases/export.json`
+- Latest CSV export: `http://127.0.0.1:3200/api/testcases/export.csv`
 
 ## Railway
 
-Railway can deploy this repo directly. The service uses one process and one port:
+Railway can deploy this repo directly from GitHub. Use the repo root and this start command:
 
 ```bash
 npm start
 ```
 
-`qa-system/server.js` reads Railway's `PORT` env var automatically.
+`qa-system/server.js` reads Railway's `PORT` env var automatically, so the UI and sample API run through one process and one port.
 
 ## Useful Commands
 
@@ -39,6 +57,7 @@ npm run app
 
 Main outputs:
 
-- `evals/results/latest_summary.json`
+- `testcase/generated/latest_writer_output.json`
+- `testcase/generated/testcases.json`
 - `testcase/approved/approved_testcases.json`
-- `tests/generated/order.spec.js`
+- `evals/results/latest_summary.json`

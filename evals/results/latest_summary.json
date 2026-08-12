@@ -1,6 +1,6 @@
 {
-  "run_id": "run-2026-08-12T13-29-59-617Z",
-  "generated_at": "2026-08-12T13:30:11.747Z",
+  "run_id": "run-2026-08-12T13-50-36-273Z",
+  "generated_at": "2026-08-12T13:50:48.465Z",
   "status": "PASS_WITH_MODEL_BENCHMARK_BLOCKED",
   "counts": {
     "rules": 7,
@@ -37,10 +37,10 @@
     "false_pass_rate": 0,
     "false_fail_rate": 0,
     "human_intervention_rate": 0.2,
-    "latency_seconds_total": 12.1,
+    "latency_seconds_total": 12.2,
     "token_usage": "BLOCKED_NO_MODEL_API_CALL",
     "estimated_model_cost_note": "Using official Claude pricing only; actual benchmark cost is blocked without API key."
   },
-  "evidence_dir": "F:\\project\\rs\\ai-qa-aidd-scanner\\evidence\\run-2026-08-12T13-29-59-617Z",
-  "run_dir": "F:\\project\\rs\\ai-qa-aidd-scanner\\evals\\results\\run-2026-08-12T13-29-59-617Z"
+  "evidence_dir": "F:\\project\\rs\\ai-qa-aidd-scanner\\evidence\\run-2026-08-12T13-50-36-273Z",
+  "run_dir": "F:\\project\\rs\\ai-qa-aidd-scanner\\evals\\results\\run-2026-08-12T13-50-36-273Z"
 }

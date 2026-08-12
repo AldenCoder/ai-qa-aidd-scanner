@@ -3,6 +3,7 @@ const http = require('http');
 const path = require('path');
 const { spawn } = require('child_process');
 const { scanRepository } = require('./scanner');
+const { generateTestcases, toCsv, OUTPUT_FILE } = require('./testcase-writer');
 const { createDemoHandler } = require('../demo-app/server');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -15,6 +16,8 @@ const demoHandler = createDemoHandler(['/demo']);
 let activeRun = null;
 let activeRepoScan = null;
 let latestRepoScan = null;
+let activeWriterRun = null;
+let latestWriterOutput = readJson(OUTPUT_FILE, null);
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -50,7 +53,7 @@ function readBody(req) {
     let data = '';
     req.on('data', (chunk) => {
       data += chunk;
-      if (data.length > 1024 * 1024) {
+      if (data.length > 2 * 1024 * 1024) {
         reject(new Error('Request body too large'));
       }
     });
@@ -80,9 +83,10 @@ function getSystemState() {
   const review = runDir ? readJson(path.join(runDir, 'review.json'), {}) : {};
   const matrix = runDir ? readJson(path.join(runDir, 'rule_matrix.json'), {}) : {};
   const validation = runDir ? readJson(path.join(runDir, 'validation.json'), {}) : {};
-  const automation = readText(path.join(ROOT, 'tests', 'generated', 'order.spec.js'));
 
   return {
+    active_writer_run: activeWriterRun,
+    latest_writer_output: latestWriterOutput || readJson(OUTPUT_FILE, null),
     active_run: activeRun,
     active_repo_scan: activeRepoScan,
     latest_repo_scan: latestRepoScan,
@@ -90,9 +94,42 @@ function getSystemState() {
     review,
     matrix,
     validation,
-    automation_exists: automation.length > 0,
     generated_at: new Date().toISOString()
   };
+}
+
+function startWriterRun(options) {
+  if (activeWriterRun && activeWriterRun.status === 'RUNNING') {
+    return { ok: false, message: 'Test case generation is already running', activeWriterRun };
+  }
+
+  activeWriterRun = {
+    status: 'RUNNING',
+    started_at: new Date().toISOString(),
+    finished_at: null,
+    error: null,
+    options
+  };
+
+  generateTestcases(options)
+    .then((result) => {
+      latestWriterOutput = result;
+      activeWriterRun = {
+        ...activeWriterRun,
+        status: 'PASSED',
+        finished_at: new Date().toISOString()
+      };
+    })
+    .catch((error) => {
+      activeWriterRun = {
+        ...activeWriterRun,
+        status: 'FAILED',
+        finished_at: new Date().toISOString(),
+        error: error.stack || error.message
+      };
+    });
+
+  return { ok: true, message: 'Test case generation started', activeWriterRun };
 }
 
 function startRepoScan(options) {
@@ -182,15 +219,15 @@ function dashboardHtml() {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>QA Checklist Scanner</title>
+  <title>AI QA Test Case Writer</title>
   <style>
     :root {
-      --bg: #f7f8fa;
+      --bg: #f6f7f9;
       --panel: #ffffff;
-      --text: #17191c;
-      --muted: #60656f;
-      --line: #d9dde3;
-      --dark: #20242a;
+      --text: #16181d;
+      --muted: #5f6673;
+      --line: #d9dee6;
+      --dark: #20242b;
       --ok: #0b6b3a;
       --warn: #8a5a00;
       --bad: #9b1c1c;
@@ -200,17 +237,19 @@ function dashboardHtml() {
     header { background: var(--dark); color: #fff; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
     h1 { margin: 0; font-size: 19px; }
     h2 { margin: 0 0 12px; font-size: 16px; }
-    main { max-width: 1160px; margin: 0 auto; padding: 18px 20px 36px; }
+    main { max-width: 1220px; margin: 0 auto; padding: 18px 20px 36px; }
     section { background: var(--panel); border: 1px solid var(--line); padding: 14px; margin-bottom: 14px; border-radius: 6px; }
-    label { display: block; font-size: 13px; font-weight: 700; color: #2c3036; }
-    input { width: 100%; margin-top: 6px; border: 1px solid var(--line); padding: 9px 10px; font-size: 14px; border-radius: 4px; background: #fff; }
+    label { display: block; font-size: 13px; font-weight: 700; color: #2d323a; }
+    input, textarea { width: 100%; margin-top: 6px; border: 1px solid var(--line); padding: 9px 10px; font-size: 14px; border-radius: 4px; background: #fff; font-family: Arial, sans-serif; }
+    textarea { min-height: 86px; resize: vertical; }
     button, a.button { border: 1px solid var(--dark); background: var(--dark); color: #fff; padding: 9px 12px; border-radius: 4px; text-decoration: none; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; min-height: 36px; }
     button.secondary, a.secondary { background: #fff; color: var(--dark); }
     button:disabled { opacity: 0.55; cursor: default; }
     .target-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .full { grid-column: 1 / -1; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
     .cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
-    .card { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 12px; min-height: 86px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 12px; min-height: 84px; }
     .label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
     .metric { font-size: 24px; font-weight: 700; line-height: 1.1; }
     .muted { color: var(--muted); font-size: 12px; }
@@ -218,73 +257,85 @@ function dashboardHtml() {
     .warn { color: var(--warn); }
     .bad { color: var(--bad); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
-    th { background: #eef1f5; color: #2a2d33; text-align: left; padding: 9px; border-bottom: 1px solid var(--line); }
+    th { background: #eef1f5; color: #2a2e35; text-align: left; padding: 9px; border-bottom: 1px solid var(--line); }
     td { border-bottom: 1px solid var(--line); padding: 9px; vertical-align: top; }
     tr:last-child td { border-bottom: 0; }
-    pre { margin: 0; max-height: 260px; overflow: auto; white-space: pre-wrap; background: #111318; color: #eef1f5; padding: 12px; border-radius: 4px; font-size: 12px; }
-    @media (max-width: 900px) {
+    .steps { margin: 0; padding-left: 18px; }
+    pre { margin: 0; max-height: 220px; overflow: auto; white-space: pre-wrap; background: #111318; color: #eef1f5; padding: 12px; border-radius: 4px; font-size: 12px; }
+    @media (max-width: 980px) {
       .target-grid, .cards { grid-template-columns: 1fr; }
       header { align-items: flex-start; flex-direction: column; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>QA Checklist Scanner</h1>
+    <h1>AI QA Test Case Writer</h1>
     <span id="top-status">Loading</span>
   </header>
   <main>
     <section>
-      <h2>Target</h2>
+      <h2>Source</h2>
       <div class="target-grid">
-        <label>Local code path
+        <label>Local code or document path
           <input id="local-path" value="${escapeHtml(ROOT)}" />
         </label>
         <label>Public GitHub URL
           <input id="github-url" placeholder="https://github.com/owner/repo" />
         </label>
-        <label>Running base URL
-          <input id="base-url" />
-        </label>
-        <label>Mode
-          <input value="API + UI + Security + Test readiness" disabled />
+        <label class="full">Extra requirement notes
+          <textarea id="requirements-text" placeholder="Paste BR/SRS/user story/checklist text here when the repo does not contain enough docs."></textarea>
         </label>
       </div>
       <div class="actions">
-        <button id="repo-scan-btn">Run checklist scan</button>
-        <button id="run-btn" class="secondary">Run generated tests</button>
-        <a id="demo-link" class="button secondary" href="/demo" target="_blank">Open demo app</a>
-        <a class="button secondary" href="/api/automation" target="_blank">Generated Playwright</a>
-        <a class="button secondary" href="/api/state" target="_blank">Raw JSON</a>
+        <button id="generate-btn">Generate test cases</button>
+        <button id="eval-btn" class="secondary">Run sample evaluation</button>
+        <a id="demo-link" class="button secondary" href="/demo" target="_blank">Open sample app</a>
+        <a class="button secondary" href="/api/testcases/export.json" target="_blank">Export JSON</a>
+        <a class="button secondary" href="/api/testcases/export.csv" target="_blank">Export CSV</a>
       </div>
     </section>
 
     <div class="cards">
-      <div class="card"><div class="label">Overall</div><div id="repo-overall" class="metric">-</div><div id="repo-source" class="muted">No scan yet</div></div>
-      <div class="card"><div class="label">API</div><div id="repo-api" class="metric">-</div><div class="muted">routes, docs, smoke</div></div>
-      <div class="card"><div class="label">UI</div><div id="repo-ui" class="metric">-</div><div class="muted">pages, e2e, smoke</div></div>
-      <div class="card"><div class="label">Security</div><div id="repo-security" class="metric">-</div><div class="muted">secrets, deps, headers</div></div>
-      <div class="card"><div class="label">Readiness</div><div id="repo-readiness" class="metric">-</div><div class="muted">tests, CI, evidence</div></div>
+      <div class="card"><div class="label">Generated</div><div id="m-total" class="metric">-</div><div id="m-source" class="muted">No generation yet</div></div>
+      <div class="card"><div class="label">Ready</div><div id="m-ready" class="metric">-</div><div class="muted">Can be used by tester</div></div>
+      <div class="card"><div class="label">Need Review</div><div id="m-review" class="metric">-</div><div class="muted">BA/tester confirmation</div></div>
+      <div class="card"><div class="label">Coverage</div><div id="m-coverage" class="metric">-</div><div class="muted">Functional/API/UI/security</div></div>
+      <div class="card"><div class="label">Traceability</div><div id="m-trace" class="metric">-</div><div class="muted">Has linked source</div></div>
     </div>
 
     <section>
-      <h2>Checklist Result</h2>
+      <h2>Generated Test Cases</h2>
       <table>
-        <thead><tr><th>Group</th><th>Score</th><th>Checks</th></tr></thead>
-        <tbody id="repo-check-table"><tr><td colspan="3">No scan yet.</td></tr></tbody>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Module</th>
+            <th>Priority</th>
+            <th>Type</th>
+            <th>Test Case</th>
+            <th>Steps / Expected</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="testcase-table"><tr><td colspan="7">No test cases yet.</td></tr></tbody>
       </table>
     </section>
 
     <section>
-      <h2>Generated Tests</h2>
+      <h2>Coverage Notes</h2>
       <table>
-        <tbody id="pipeline-table"><tr><td>No run yet.</td></tr></tbody>
+        <tbody id="coverage-table"><tr><td>No coverage data yet.</td></tr></tbody>
       </table>
     </section>
 
     <section>
-      <h2>Latest Log</h2>
-      <pre id="run-log">No log.</pre>
+      <h2>Sample Evaluation</h2>
+      <table>
+        <tbody id="eval-table"><tr><td>No sample run yet.</td></tr></tbody>
+      </table>
+      <pre id="run-log">No active run log.</pre>
     </section>
   </main>
   <script>
@@ -293,93 +344,136 @@ function dashboardHtml() {
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     }
-    function cls(status) {
-      if (!status) return '';
-      if (String(status).includes('PASS') || Number(status) >= 80) return 'ok';
-      if (String(status).includes('RUN') || Number(status) >= 60) return 'warn';
-      return 'bad';
+    function esc(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
-    function displayStatus(status) {
-      return String(status || '').includes('BLOCKED') ? 'PASS' : (status || 'NO RUN');
+    function metricClass(value) {
+      if (value === undefined || value === null || value === '-') return 'metric';
+      var num = Number(value);
+      if (Number.isNaN(num)) return 'metric warn';
+      if (num >= 80) return 'metric ok';
+      if (num >= 60) return 'metric warn';
+      return 'metric bad';
     }
-    function checks(group) {
-      if (!group || !group.checks || !group.checks.length) return '-';
-      return group.checks.map(function (item) {
-        return '<strong>' + item.status + '</strong> - ' + item.name + ': ' + item.detail;
-      }).join('<br>');
-    }
-    function setMetric(id, value) {
+    function setMetric(id, value, suffix) {
       var el = document.getElementById(id);
-      el.textContent = value === undefined || value === null ? '-' : value + '%';
-      el.className = 'metric ' + cls(value);
+      var display = value === undefined || value === null ? '-' : String(value) + (suffix || '');
+      el.textContent = display;
+      el.className = metricClass(value);
+    }
+    function stepsHtml(testcase) {
+      var steps = (testcase.steps || []).map(function (step) { return '<li>' + esc(step) + '</li>'; }).join('');
+      return '<ol class="steps">' + steps + '</ol><div><strong>Expected:</strong> ' + esc(testcase.expected_result) + '</div>';
+    }
+    function sourceText(testcase) {
+      return (testcase.sources || []).map(function (item) {
+        return item.file + ' / ' + item.section;
+      }).join('; ');
+    }
+    function renderTestcases(pack) {
+      var list = pack && pack.testcases ? pack.testcases : [];
+      if (!list.length) {
+        document.getElementById('testcase-table').innerHTML = '<tr><td colspan="7">No test cases yet.</td></tr>';
+        return;
+      }
+      document.getElementById('testcase-table').innerHTML = list.slice(0, 80).map(function (testcase) {
+        var statusClass = testcase.review_status === 'READY' ? 'ok' : 'warn';
+        return '<tr>' +
+          '<td>' + esc(testcase.test_case_id) + '</td>' +
+          '<td>' + esc(testcase.module) + '<div class="muted">' + esc(sourceText(testcase)) + '</div></td>' +
+          '<td>' + esc(testcase.priority) + '</td>' +
+          '<td>' + esc(testcase.type) + '</td>' +
+          '<td><strong>' + esc(testcase.title) + '</strong><div class="muted">' + esc(testcase.automation_hint) + '</div></td>' +
+          '<td>' + stepsHtml(testcase) + '</td>' +
+          '<td class="' + statusClass + '">' + esc(testcase.review_status) + '<div class="muted">' + esc(testcase.review_notes) + '</div></td>' +
+        '</tr>';
+      }).join('');
+    }
+    function renderCoverage(pack) {
+      if (!pack || !pack.metrics) {
+        document.getElementById('coverage-table').innerHTML = '<tr><td>No coverage data yet.</td></tr>';
+        return;
+      }
+      var metrics = pack.metrics;
+      var gaps = pack.gaps || [];
+      var rows = [
+        ['Requirements found', metrics.requirements_found],
+        ['API endpoints found', metrics.endpoints_found],
+        ['UI surfaces found', metrics.ui_surfaces_found],
+        ['Files scanned', pack.file_count],
+        ['Stack hints', (pack.stack || []).join(', ') || '-'],
+        ['Gaps', gaps.length ? gaps.join('<br>') : 'No major gap detected']
+      ];
+      document.getElementById('coverage-table').innerHTML = rows.map(function (row) {
+        return '<tr><td><strong>' + esc(row[0]) + '</strong></td><td>' + row[1] + '</td></tr>';
+      }).join('');
+    }
+    function renderEval(summary) {
+      var counts = summary && summary.counts ? summary.counts : {};
+      var metrics = summary && summary.metrics ? summary.metrics : {};
+      var known = counts.known_good_tests || {};
+      var seeded = counts.seeded_bug_tests || {};
+      var rows = [
+        ['Rules extracted', counts.rules || 0],
+        ['Static sample testcases', counts.testcases_generated || 0],
+        ['Approved / review required', (counts.approved || 0) + ' / ' + (counts.review_required || 0)],
+        ['Known-good automation', (known.expected || 0) + '/' + (known.total || 0)],
+        ['Seeded-bug failures detected', (seeded.unexpected || 0) + '/' + (seeded.total || 0)],
+        ['False pass rate', Math.round(Number(metrics.false_pass_rate || 0) * 100) + '%']
+      ];
+      document.getElementById('eval-table').innerHTML = rows.map(function (row) {
+        return '<tr><td><strong>' + esc(row[0]) + '</strong></td><td>' + esc(row[1]) + '</td></tr>';
+      }).join('');
     }
     async function refresh() {
       var state = await getJson('/api/state');
-      var repo = state.latest_repo_scan || {};
-      var repoActive = state.active_repo_scan || {};
+      var writer = state.active_writer_run || {};
+      var pack = state.latest_writer_output;
+      var metrics = pack && pack.metrics ? pack.metrics : {};
       var active = state.active_run || {};
-      var summary = state.summary || {};
-      var counts = summary.counts || {};
-      var metrics = summary.metrics || {};
 
       document.getElementById('top-status').textContent =
-        repoActive.status === 'RUNNING' ? 'Scanning' : (active.status === 'RUNNING' ? 'Running tests' : 'Ready');
-      document.getElementById('repo-scan-btn').disabled = repoActive.status === 'RUNNING';
-      document.getElementById('run-btn').disabled = active.status === 'RUNNING';
+        writer.status === 'RUNNING' ? 'Generating test cases' : (active.status === 'RUNNING' ? 'Running evaluation' : 'Ready');
+      document.getElementById('generate-btn').disabled = writer.status === 'RUNNING';
+      document.getElementById('eval-btn').disabled = active.status === 'RUNNING';
 
-      if (repoActive.status === 'RUNNING') {
-        document.getElementById('repo-overall').textContent = 'RUNNING';
-        document.getElementById('repo-overall').className = 'metric warn';
-        document.getElementById('repo-source').textContent = repoActive.options && (repoActive.options.githubUrl || repoActive.options.localPath || '-');
-      } else if (repo.overall_score !== undefined) {
-        setMetric('repo-overall', repo.overall_score);
-        setMetric('repo-api', repo.scores && repo.scores.api);
-        setMetric('repo-ui', repo.scores && repo.scores.ui);
-        setMetric('repo-security', repo.scores && repo.scores.security);
-        setMetric('repo-readiness', repo.scores && repo.scores.test_readiness);
-        document.getElementById('repo-source').textContent = repo.source || '-';
-        var rows = [
-          ['API', repo.scores.api + '%', checks(repo.api)],
-          ['UI', repo.scores.ui + '%', checks(repo.ui)],
-          ['Security', repo.scores.security + '%', checks(repo.security)],
-          ['Test readiness', repo.scores.test_readiness + '%', checks(repo.test_readiness)]
-        ];
-        document.getElementById('repo-check-table').innerHTML = rows.map(function (row) {
-          return '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td><td>' + row[2] + '</td></tr>';
-        }).join('');
+      if (writer.status === 'RUNNING') {
+        document.getElementById('m-total').textContent = 'RUNNING';
+        document.getElementById('m-total').className = 'metric warn';
+      } else {
+        setMetric('m-total', metrics.total_testcases);
       }
+      setMetric('m-ready', metrics.ready_percent, '%');
+      setMetric('m-review', metrics.review_required);
+      setMetric('m-coverage', metrics.coverage_score, '%');
+      setMetric('m-trace', metrics.traceability_percent, '%');
+      document.getElementById('m-source').textContent = pack && pack.source ? pack.source : 'No generation yet';
 
-      var known = counts.known_good_tests || {};
-      var seeded = counts.seeded_bug_tests || {};
-      var pipeRows = [
-        ['Status', displayStatus(summary.status)],
-        ['Rules', counts.rules || 0],
-        ['Testcases generated / approved / review', [counts.testcases_generated || 0, counts.approved || 0, counts.review_required || 0].join(' / ')],
-        ['Known-good tests', (known.expected || 0) + '/' + (known.total || 0)],
-        ['Seeded-bug detected failures', (seeded.unexpected || 0) + '/' + (seeded.total || 0)],
-        ['False pass rate', Math.round(Number(metrics.false_pass_rate || 0) * 100) + '%']
-      ];
-      document.getElementById('pipeline-table').innerHTML = pipeRows.map(function (row) {
-        return '<tr><td><strong>' + row[0] + '</strong></td><td>' + row[1] + '</td></tr>';
-      }).join('');
+      renderTestcases(pack);
+      renderCoverage(pack);
+      renderEval(state.summary);
 
       var log = active.log_path ? await fetch('/api/log').then(function (r) { return r.text(); }).catch(function () { return ''; }) : '';
       document.getElementById('run-log').textContent = log || 'No active run log.';
     }
     document.getElementById('demo-link').href = window.location.origin + '/demo';
-    document.getElementById('base-url').value = window.location.origin + '/demo';
-    document.getElementById('repo-scan-btn').addEventListener('click', async function () {
+    document.getElementById('generate-btn').addEventListener('click', async function () {
       var githubUrl = document.getElementById('github-url').value.trim();
       var localPath = document.getElementById('local-path').value.trim();
-      var baseUrl = document.getElementById('base-url').value.trim();
-      await getJson('/api/repo-scan', {
+      var requirementsText = document.getElementById('requirements-text').value;
+      await getJson('/api/testcases/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ githubUrl: githubUrl, localPath: localPath, baseUrl: baseUrl })
+        body: JSON.stringify({ githubUrl: githubUrl, localPath: localPath, requirementsText: requirementsText })
       });
       refresh();
     });
-    document.getElementById('run-btn').addEventListener('click', async function () {
+    document.getElementById('eval-btn').addEventListener('click', async function () {
       await getJson('/api/run', { method: 'POST' });
       refresh();
     });
@@ -401,6 +495,18 @@ const server = http.createServer(async (req, res) => {
     send(res, 200, getSystemState());
     return;
   }
+  if (req.method === 'GET' && url.pathname === '/api/testcases/latest') {
+    send(res, 200, latestWriterOutput || readJson(OUTPUT_FILE, { testcases: [] }));
+    return;
+  }
+  if (req.method === 'GET' && url.pathname === '/api/testcases/export.json') {
+    send(res, 200, latestWriterOutput || readJson(OUTPUT_FILE, { testcases: [] }));
+    return;
+  }
+  if (req.method === 'GET' && url.pathname === '/api/testcases/export.csv') {
+    send(res, 200, toCsv(latestWriterOutput || readJson(OUTPUT_FILE, { testcases: [] })), 'text/csv; charset=utf-8');
+    return;
+  }
   if (req.method === 'GET' && url.pathname === '/api/log') {
     const logPath = activeRun && activeRun.log_path;
     send(res, 200, logPath ? readText(logPath, '') : '', 'text/plain; charset=utf-8');
@@ -408,6 +514,22 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === 'GET' && url.pathname === '/api/automation') {
     send(res, 200, readText(path.join(ROOT, 'tests', 'generated', 'order.spec.js'), 'No automation generated yet.'), 'text/plain; charset=utf-8');
+    return;
+  }
+  if (req.method === 'POST' && url.pathname === '/api/testcases/generate') {
+    try {
+      const body = await readBody(req);
+      const githubUrl = body.githubUrl && body.githubUrl.trim() ? body.githubUrl.trim() : '';
+      const options = {
+        githubUrl,
+        localPath: githubUrl ? '' : (body.localPath || ROOT),
+        requirementsText: body.requirementsText || ''
+      };
+      const result = startWriterRun(options);
+      send(res, result.ok ? 202 : 409, result);
+    } catch (error) {
+      send(res, 400, { error: error.message });
+    }
     return;
   }
   if (req.method === 'POST' && url.pathname === '/api/run') {
@@ -443,5 +565,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`QA Checklist Scanner listening on http://127.0.0.1:${PORT}`);
+  console.log(`AI QA Test Case Writer listening on http://127.0.0.1:${PORT}`);
 });

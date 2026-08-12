@@ -3,6 +3,8 @@ const path = require('path');
 const os = require('os');
 const { spawnSync } = require('child_process');
 
+const ROOT = path.resolve(__dirname, '..');
+
 const SKIP_DIRS = new Set([
   '.git',
   'node_modules',
@@ -379,4 +381,12 @@ async function scanRepository(options = {}) {
   };
 }
 
-module.exports = { scanRepository };
+module.exports = {
+  scanRepository,
+  prepareTarget,
+  walk,
+  safeRead,
+  rel,
+  discoverApi,
+  detectStack
+};
