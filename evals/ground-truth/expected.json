@@ -1,0 +1,16 @@
+{
+  "expected_confirmed_rules": [
+    "R-ORDER-001",
+    "R-ORDER-002",
+    "R-ORDER-003",
+    "R-ORDER-004",
+    "R-ORDER-006"
+  ],
+  "expected_missing_rules": ["R-ORDER-005"],
+  "expected_conflict_rules": ["R-EVAL-CONFLICT-001"],
+  "quantity_boundaries": [0, 1, 100, 101],
+  "seeded_wrong_source_testcase": "TC-SEED-WRONG-SOURCE",
+  "seeded_duplicate_expected": true,
+  "known_good_should_pass": true,
+  "seeded_bug_should_fail": true
+}

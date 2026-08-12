@@ -1,0 +1,32 @@
+{
+  "testcases": [
+    {
+      "test_case_id": "TC-SEED-WRONG-SOURCE",
+      "title": "Seeded testcase with wrong source",
+      "type": "reviewer_negative",
+      "priority": "HIGH",
+      "preconditions": [],
+      "test_data": {
+        "quantity": 75
+      },
+      "steps": [
+        "Submit quantity 75"
+      ],
+      "expected_result": "Order is rejected because quantity max is 50.",
+      "rule_ids": [
+        "R-ORDER-001"
+      ],
+      "sources": [
+        {
+          "file": "evals/fixtures/conflict/api-order-v2-conflict.md",
+          "section": "BR-06 Quantity Maximum Conflict"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "REJECTED",
+      "review_reasons": [
+        "source mismatch for R-ORDER-001"
+      ]
+    }
+  ]
+}

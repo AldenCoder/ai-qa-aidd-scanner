@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "test_case_id",
+    "title",
+    "type",
+    "priority",
+    "test_data",
+    "steps",
+    "expected_result",
+    "rule_ids",
+    "sources",
+    "rule_status",
+    "approval_status"
+  ],
+  "properties": {
+    "test_case_id": { "type": "string" },
+    "title": { "type": "string" },
+    "type": { "type": "string" },
+    "priority": { "enum": ["LOW", "MEDIUM", "HIGH"] },
+    "test_data": { "type": "object" },
+    "steps": { "type": "array" },
+    "expected_result": { "type": ["string", "null"] },
+    "rule_ids": { "type": "array", "items": { "type": "string" } },
+    "sources": { "type": "array" },
+    "rule_status": { "enum": ["CONFIRMED", "INFERRED", "MISSING", "CONFLICT"] },
+    "approval_status": {
+      "enum": ["GENERATED", "VALIDATED", "REVIEW_REQUIRED", "APPROVED", "REJECTED"]
+    }
+  }
+}

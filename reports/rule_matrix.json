@@ -1,0 +1,106 @@
+{
+  "generated_at": "2026-08-12T13:29:59.650Z",
+  "method": "deterministic-source-parser",
+  "rules": [
+    {
+      "rule_id": "R-ORDER-001",
+      "condition": "Quantity must be an integer between 1 and 100 inclusive.",
+      "boundaries": [
+        0,
+        1,
+        100,
+        101
+      ],
+      "status": "CONFIRMED",
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-01 Quantity"
+        }
+      ]
+    },
+    {
+      "rule_id": "R-ORDER-002",
+      "condition": "Customer is required and must not be blank.",
+      "boundaries": [],
+      "status": "CONFIRMED",
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-02 Customer"
+        }
+      ]
+    },
+    {
+      "rule_id": "R-ORDER-003",
+      "condition": "Product ID must exist in GET /api/products.",
+      "boundaries": [],
+      "status": "CONFIRMED",
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-03 Product"
+        }
+      ]
+    },
+    {
+      "rule_id": "R-ORDER-004",
+      "condition": "Delivery date must be today or a future date.",
+      "boundaries": [
+        "yesterday",
+        "today"
+      ],
+      "status": "CONFIRMED",
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-04 Delivery Date"
+        }
+      ]
+    },
+    {
+      "rule_id": "R-ORDER-005",
+      "condition": "Maximum total order value is referenced by stakeholders, but no approved limit is defined.",
+      "boundaries": [],
+      "status": "MISSING",
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-05 Maximum Total Order Value"
+        }
+      ]
+    },
+    {
+      "rule_id": "R-ORDER-006",
+      "condition": "GET /api/orders/{id} returns 404 for an unknown order ID.",
+      "boundaries": [],
+      "status": "CONFIRMED",
+      "sources": [
+        {
+          "file": "knowledge/api/order-api.md",
+          "section": "GET /api/orders/{id}"
+        }
+      ]
+    },
+    {
+      "rule_id": "R-EVAL-CONFLICT-001",
+      "condition": "Quantity maximum is conflicting: screen spec says 100, legacy API draft says 50.",
+      "boundaries": [
+        50,
+        100
+      ],
+      "status": "CONFLICT",
+      "eval_only": true,
+      "sources": [
+        {
+          "file": "knowledge/screens/order-create.md",
+          "section": "Fields"
+        },
+        {
+          "file": "evals/fixtures/conflict/api-order-v2-conflict.md",
+          "section": "BR-06 Quantity Maximum Conflict"
+        }
+      ]
+    }
+  ]
+}

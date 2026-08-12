@@ -1,0 +1,46 @@
+{
+  "run_id": "run-2026-08-12T13-29-59-617Z",
+  "generated_at": "2026-08-12T13:30:11.747Z",
+  "status": "PASS_WITH_MODEL_BENCHMARK_BLOCKED",
+  "counts": {
+    "rules": 7,
+    "testcases_generated": 10,
+    "approved": 8,
+    "review_required": 2,
+    "rejected": 1,
+    "known_good_tests": {
+      "total": 12,
+      "expected": 12,
+      "unexpected": 0
+    },
+    "seeded_bug_tests": {
+      "total": 12,
+      "expected": 10,
+      "unexpected": 2
+    }
+  },
+  "metrics": {
+    "rule_extraction_recall": 1,
+    "rule_extraction_precision": 1,
+    "source_traceability_rate": 1,
+    "unsupported_expected_result_rate": 0,
+    "missing_detection_accuracy": 1,
+    "conflict_detection_accuracy": 1,
+    "boundary_coverage": 1,
+    "duplicate_detector_seed_catch_rate": 1,
+    "approved_duplicate_rate": 0,
+    "reviewer_catch_rate": 1,
+    "automation_compile_rate": 1,
+    "known_good_execution_passed": true,
+    "seeded_bug_execution_failed": true,
+    "execution_accuracy": 1,
+    "false_pass_rate": 0,
+    "false_fail_rate": 0,
+    "human_intervention_rate": 0.2,
+    "latency_seconds_total": 12.1,
+    "token_usage": "BLOCKED_NO_MODEL_API_CALL",
+    "estimated_model_cost_note": "Using official Claude pricing only; actual benchmark cost is blocked without API key."
+  },
+  "evidence_dir": "F:\\project\\rs\\ai-qa-aidd-scanner\\evidence\\run-2026-08-12T13-29-59-617Z",
+  "run_dir": "F:\\project\\rs\\ai-qa-aidd-scanner\\evals\\results\\run-2026-08-12T13-29-59-617Z"
+}

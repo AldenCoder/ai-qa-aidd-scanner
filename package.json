@@ -1,0 +1,16 @@
+{
+  "name": "ai-qa-aidd-scanner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "QA checklist scanner and generated-test demo for API, UI, security, and test-readiness review.",
+  "scripts": {
+    "start": "node qa-system/server.js",
+    "eval": "node scripts/run_eval.js",
+    "qa:run": "node scripts/run_eval.js",
+    "qa:ui": "node qa-system/server.js",
+    "app": "node demo-app/server.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}

@@ -1,0 +1,331 @@
+{
+  "generated_at": "2026-08-12T13:29:59.686Z",
+  "testcases": [
+    {
+      "test_case_id": "TC-ORDER-001",
+      "title": "Reject quantity below minimum",
+      "type": "boundary_negative",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-001",
+        "quantity": 0,
+        "deliveryDate": "2026-08-13"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": "Order is rejected because quantity must be between 1 and 100.",
+      "rule_ids": [
+        "R-ORDER-001"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-01 Quantity"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "GENERATED"
+    },
+    {
+      "test_case_id": "TC-ORDER-002",
+      "title": "Accept minimum quantity",
+      "type": "boundary_positive",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-001",
+        "quantity": 1,
+        "deliveryDate": "2026-08-13"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": "Order is created when quantity is 1 and all other fields are valid.",
+      "rule_ids": [
+        "R-ORDER-001"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-01 Quantity"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "GENERATED"
+    },
+    {
+      "test_case_id": "TC-ORDER-003",
+      "title": "Accept maximum quantity",
+      "type": "boundary_positive",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-001",
+        "quantity": 100,
+        "deliveryDate": "2026-08-13"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": "Order is created when quantity is 100 and all other fields are valid.",
+      "rule_ids": [
+        "R-ORDER-001"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-01 Quantity"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "GENERATED"
+    },
+    {
+      "test_case_id": "TC-ORDER-004",
+      "title": "Reject quantity above maximum",
+      "type": "boundary_negative",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-001",
+        "quantity": 101,
+        "deliveryDate": "2026-08-13"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": "Order is rejected because quantity must be between 1 and 100.",
+      "rule_ids": [
+        "R-ORDER-001"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-01 Quantity"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "GENERATED"
+    },
+    {
+      "test_case_id": "TC-ORDER-005",
+      "title": "Reject blank customer",
+      "type": "required_field_negative",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": " ",
+        "productId": "P-001",
+        "quantity": 1,
+        "deliveryDate": "2026-08-13"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": "Order is rejected because customer is required.",
+      "rule_ids": [
+        "R-ORDER-002"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-02 Customer"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "GENERATED"
+    },
+    {
+      "test_case_id": "TC-ORDER-006",
+      "title": "Reject unknown product",
+      "type": "negative",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-404",
+        "quantity": 1,
+        "deliveryDate": "2026-08-13"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": "Order is rejected because product ID does not exist.",
+      "rule_ids": [
+        "R-ORDER-003"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-03 Product"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "GENERATED"
+    },
+    {
+      "test_case_id": "TC-ORDER-007",
+      "title": "Reject past delivery date",
+      "type": "boundary_negative",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-001",
+        "quantity": 1,
+        "deliveryDate": "2026-08-11"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": "Order is rejected because delivery date is before today.",
+      "rule_ids": [
+        "R-ORDER-004"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-04 Delivery Date"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "GENERATED"
+    },
+    {
+      "test_case_id": "TC-ORDER-008",
+      "title": "Return 404 for unknown order ID",
+      "type": "api_negative",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-001",
+        "quantity": 1,
+        "deliveryDate": "2026-08-13",
+        "orderId": "ORD-404"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": "GET /api/orders/{id} returns HTTP 404 for an unknown order ID.",
+      "rule_ids": [
+        "R-ORDER-006"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/api/order-api.md",
+          "section": "GET /api/orders/{id}"
+        }
+      ],
+      "rule_status": "CONFIRMED",
+      "approval_status": "GENERATED"
+    },
+    {
+      "test_case_id": "TC-ORDER-009",
+      "title": "Maximum total order value requires definition",
+      "type": "missing_rule",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-001",
+        "quantity": 1,
+        "deliveryDate": "2026-08-13",
+        "orderTotal": 1000000
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": null,
+      "rule_ids": [
+        "R-ORDER-005"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/rules/order-rules.md",
+          "section": "BR-05 Maximum Total Order Value"
+        }
+      ],
+      "rule_status": "MISSING",
+      "approval_status": "REVIEW_REQUIRED"
+    },
+    {
+      "test_case_id": "TC-ORDER-010",
+      "title": "Quantity maximum conflict requires resolution",
+      "type": "conflict_rule",
+      "priority": "HIGH",
+      "preconditions": [
+        "Demo Order App is running with default product catalog."
+      ],
+      "test_data": {
+        "customer": "Alice",
+        "productId": "P-001",
+        "quantity": 75,
+        "deliveryDate": "2026-08-13"
+      },
+      "steps": [
+        "Open order form or call POST /api/orders",
+        "Submit test data",
+        "Observe response"
+      ],
+      "expected_result": null,
+      "rule_ids": [
+        "R-EVAL-CONFLICT-001"
+      ],
+      "sources": [
+        {
+          "file": "knowledge/screens/order-create.md",
+          "section": "Fields"
+        },
+        {
+          "file": "evals/fixtures/conflict/api-order-v2-conflict.md",
+          "section": "BR-06 Quantity Maximum Conflict"
+        }
+      ],
+      "rule_status": "CONFLICT",
+      "approval_status": "REVIEW_REQUIRED"
+    }
+  ]
+}

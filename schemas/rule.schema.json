@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["rule_id", "condition", "status", "sources"],
+  "properties": {
+    "rule_id": { "type": "string" },
+    "condition": { "type": "string" },
+    "boundaries": { "type": "array" },
+    "status": { "enum": ["CONFIRMED", "INFERRED", "MISSING", "CONFLICT"] },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "section"],
+        "properties": {
+          "file": { "type": "string" },
+          "section": { "type": "string" }
+        }
+      }
+    }
+  }
+}

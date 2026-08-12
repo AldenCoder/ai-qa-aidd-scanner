@@ -1,0 +1,8 @@
+node_modules/
+logs/
+evidence/
+output/
+tmp/
+*.log
+evals/results/run-*/
+!evals/results/latest_summary.json

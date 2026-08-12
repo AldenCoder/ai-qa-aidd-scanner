@@ -1,0 +1,12 @@
+{
+  "product": "Demo Order App",
+  "screen_id": "ORDER_CREATE",
+  "source_files": [
+    "knowledge/rules/order-rules.md",
+    "knowledge/screens/order-create.md",
+    "knowledge/api/order-api.md"
+  ],
+  "eval_fixtures": [
+    "evals/fixtures/conflict/api-order-v2-conflict.md"
+  ]
+}
